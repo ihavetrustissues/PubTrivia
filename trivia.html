@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🍺 Security Pub Trivia — Offsite Edition</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --coral-dark: #993C1D;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-dark: #0F6E56;
+    --bg: #f7f5f2;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --border: rgba(0,0,0,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 4rem;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--coral); }
+  .team-pill {
+    font-size: 12px;
+    background: var(--coral-light);
+    color: var(--coral-dark);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .progress-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--coral);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-label { font-size: 11px; color: var(--text-muted); min-width: 60px; text-align: right; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* WELCOME */
+  .welcome-hero {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1a0e 100%);
+    color: white;
+    padding: 3rem 1.5rem 2.5rem;
+    text-align: center;
+  }
+  .welcome-hero .beer { font-size: 48px; margin-bottom: 1rem; }
+  .welcome-hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .welcome-hero p { color: rgba(255,255,255,0.65); font-size: 15px; }
+
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    padding: 1.25rem;
+    margin: 0 0 4px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--coral); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .section { padding: 0 1.25rem; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .name-input {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: var(--coral); }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    text-align: center;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--coral); color: white; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  /* ROUND */
+  .round-hero {
+    padding: 1.25rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .round-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--coral-light);
+    color: var(--coral-dark);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+  }
+  .round-name { font-size: 21px; font-weight: 700; }
+
+  .question-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin: 10px 1.25rem;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .question-card.locked-card { border-color: var(--teal); }
+
+  .q-top {
+    padding: 1rem 1rem 0.75rem;
+  }
+  .q-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+  .q-text { font-size: 15px; font-weight: 500; line-height: 1.5; }
+
+  .q-bottom {
+    border-top: 1px solid var(--border);
+    padding: 10px;
+    background: #fafaf9;
+  }
+  .answer-input {
+    width: 100%;
+    font-size: 15px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--text);
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .answer-input:focus { border-color: var(--coral); }
+  .answer-input:disabled {
+    background: #f0f0ee;
+    color: var(--text-muted);
+    border-color: transparent;
+  }
+  .lock-btn {
+    width: 100%;
+    padding: 9px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .lock-btn:hover { border-color: var(--coral); color: var(--coral); }
+  .locked-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--teal-dark);
+    padding: 2px 0;
+  }
+  .locked-tag::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: var(--teal);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M6.5 11.5L3.5 8.5l1-1 2 2 4-4 1 1z'/%3E%3C/svg%3E");
+    background-size: cover;
+  }
+
+  .nav-bar {
+    display: flex;
+    gap: 10px;
+    padding: 1.25rem;
+  }
+
+  /* REVIEW */
+  .review-hero {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1a0e 100%);
+    color: white;
+    padding: 2.5rem 1.5rem 2rem;
+    text-align: center;
+  }
+  .review-hero .confetti { font-size: 40px; margin-bottom: 12px; }
+  .review-hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .review-hero p { color: rgba(255,255,255,0.65); font-size: 14px; }
+
+  .review-round { margin: 0 1.25rem 16px; }
+  .review-round-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--coral-dark);
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .review-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .review-row:last-child { border-bottom: none; }
+  .review-q { font-size: 13px; color: var(--text-muted); flex: 1.5; }
+  .review-a { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; flex: 1; }
+  .review-a.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+
+  .good-luck {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- STICKY HEADER (hidden on welcome) -->
+<div class="header" id="sticky-header" style="display:none;">
+  <div class="header-top">
+    <div class="logo">🍺 <span>Trivia</span> Night</div>
+    <div class="team-pill" id="header-team-name"></div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="header-progress"></div></div>
+    <div class="progress-label" id="header-progress-label">0 / 0</div>
+  </div>
+</div>
+
+<!-- WELCOME SCREEN -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-hero">
+    <div class="beer">🍺</div>
+    <h1>Security Pub Trivia</h1>
+    <p>Offsite Edition &mdash; 5 rounds, 65 questions, one winner</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">5</div><div class="stat-label">Rounds</div></div>
+    <div class="stat-card"><div class="stat-num">65</div><div class="stat-label">Questions</div></div>
+    <div class="stat-card"><div class="stat-num">~90</div><div class="stat-label">Minutes</div></div>
+  </div>
+  <div class="section">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Enter your team name</div>
+      <input class="name-input" type="text" id="team-name-input" placeholder="The Quiz Khalifas…" maxlength="40" oninput="checkName()" />
+      <button class="btn btn-primary" id="start-btn" onclick="startQuiz()" disabled>Let's play →</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);padding:0 4px;line-height:1.6;">
+      <strong>How it works:</strong> One person submits answers for your table. Each answer locks in immediately — no changes allowed. Good luck. 🏆
+    </div>
+  </div>
+</div>
+
+<!-- ROUND SCREEN -->
+<div id="screen-round" class="screen">
+  <div class="round-hero">
+    <div class="round-badge" id="round-badge"></div>
+    <div class="round-name" id="round-name"></div>
+  </div>
+  <div id="questions-container"></div>
+  <div class="nav-bar">
+    <button class="btn btn-ghost" id="prev-btn" onclick="prevRound()" style="flex:1;">← Back</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextRound()" style="flex:2;">Next round →</button>
+  </div>
+</div>
+
+<!-- REVIEW SCREEN -->
+<div id="screen-review" class="screen">
+  <div class="review-hero">
+    <div class="confetti">🎉</div>
+    <h2 id="review-team-label"></h2>
+    <p>Quiz complete! Your answers are locked in below.</p>
+  </div>
+  <div id="review-content" style="margin-top:1.25rem;"></div>
+  <div class="good-luck">Good luck! Tell the MC when you're done. 🍀</div>
+</div>
+
+<script>
+const QUIZ = [
+  {
+    name: "Microsoft & GitHub History",
+    questions: [
+      "GitHub was founded in what year?",
+      "Name GitHub's four co-founders. (1 point per name)",
+      "How much did Microsoft pay to acquire GitHub in 2018?",
+      "Name the GitHub mascot that got its start due to a concept called \"the octopus merge.\"",
+      "Microsoft was co-founded by Bill Gates and who else?",
+      "Microsoft Office was first released in 1989 — but not for Windows. Which OS did it launch on first?",
+      "GitHub Actions (CI/CD platform) launched in beta in what year?",
+      "In 2020, GitHub archived 21TB of open-source data in a decommissioned coal mine in which country? Bonus: name the city!",
+      "Linus Torvalds created Git in 2005 out of frustration with which version control system?",
+      "What programming language was GitHub originally built with?"
+    ]
+  },
+  {
+    name: "Real Startup Pitch or Did We Make It Up?",
+    note: "Vote REAL or FAKE for each. 1 point each.",
+    questions: [
+      "\"A $400 Wi-Fi-connected juicer that squeezes proprietary juice packets — but journalists discovered you could just squeeze the bag by hand.\" — REAL or FAKE?",
+      "\"An app that lets you rent out your dog as a coworking emotional support pet to nearby remote workers by the hour.\" — REAL or FAKE?",
+      "\"A service where you pay a monthly fee and receive texts and handwritten notes from a completely fictional significant other, designed to satisfy nosy family members.\" — REAL or FAKE?",
+      "\"A subscription service that mails you small fabric swatches scented like your specific office — burnt coffee, old carpet, printer toner.\" — REAL or FAKE?",
+      "\"A startup that sells a wearable device for your dog's collar that translates barks into English text messages sent to your phone.\" — REAL or FAKE?",
+      "\"An app that uses AI to write a personalized breakup text for you, then schedules its delivery for optimal emotional timing.\" — REAL or FAKE?",
+      "\"A marketplace where you can hire a 'professional forgetter' who listens to a secret and remembers it indefinitely, never bringing it up unless asked.\" — REAL or FAKE?",
+      "\"A startup that sells 'raw water' — unfiltered, untreated spring water — for up to $60 a gallon, marketed as healthier than tap.\" — REAL or FAKE?",
+      "\"A mini Wi-Fi-connected refrigerator, just for your skincare, with an app that tracks expiration dates and optimal temperatures.\" — REAL or FAKE?",
+      "\"An NFT startup that let you propose to your partner with a uniquely generated blockchain diamond — digital only, no physical ring.\" — REAL or FAKE?\""
+    ]
+  },
+  {
+    name: "Name That Threat — Infosec & Hacking History",
+    questions: [
+      "What famous 2017 ransomware attack encrypted hundreds of thousands of computers globally and demanded Bitcoin payments?",
+      "The Stuxnet worm, discovered around 2010, was designed to sabotage what kind of facility?",
+      "What does \"CVE\" stand for?",
+      "The 2000 virus that spread via email with the subject line \"KINDLY CHECK THE ATTACHED LOVELETTER FOR YOU\" was known as what?",
+      "A penetration tester is commonly called a ______ hat hacker.",
+      "What term describes an attacker who sits between two communicating parties and secretly intercepts or alters their messages?",
+      "Kevin Mitnick was especially known for his use of what non-technical attack method?",
+      "An unknown flaw with no patch available is called by what name?",
+      "What is the term for a list of precomputed password hashes used to quickly crack passwords?",
+      "The 2013 breach of what major retailer exposed 40 million credit and debit card numbers through a compromised HVAC vendor's credentials?"
+    ]
+  },
+  {
+    name: "I'll Take Existential Dread — AI in the Movies",
+    questions: [
+      "This AI villain of a 1968 Stanley Kubrick film famously refuses to open the pod bay doors. Name it.",
+      "In the Terminator franchise, what is the name of the military AI that becomes self-aware and launches a nuclear strike?",
+      "In the 2013 film Her, what is the name of the AI operating system Joaquin Phoenix's character falls in love with?",
+      "Tony Stark's AI assistant JARVIS eventually gives up his digital existence to become which Avenger?",
+      "In Ex Machina (2014), a programmer administers the Turing test to a humanoid robot. What is the robot's name?",
+      "WALL-E falls for a sleek robot sent to survey Earth. What is that robot's name?",
+      "In The Matrix, what do humans actually think they're experiencing while inside the pods?",
+      "In Westworld, what is the name of the lead female host who first begins to remember her past loops and leads a rebellion?",
+      "In the 1982 film Blade Runner, human-like androids are known by what term?",
+      "This 1995 Japanese cyberpunk anime follows a cyborg government agent hunting an AI criminal known as the Puppet Master. Name it."
+    ]
+  },
+  {
+    name: "Real APT Name or Pokémon?",
+    note: "Write APT or Pokémon for each. 1 point each. All names are real — that's what makes this terrifying.",
+    questions: [
+      "Charming Kitten — APT or Pokémon?",
+      "Flutter Mane — APT or Pokémon?",
+      "Gamaredon — APT or Pokémon?",
+      "Roaring Moon — APT or Pokémon?",
+      "Chrysene — APT or Pokémon?",
+      "Walking Wake — APT or Pokémon?",
+      "Wizard Spider — APT or Pokémon?",
+      "Sandy Shocks — APT or Pokémon?",
+      "Volt Typhoon — APT or Pokémon?",
+      "Iron Valiant — APT or Pokémon?",
+      "Kimsuky — APT or Pokémon?",
+      "Cadet Blizzard — APT or Pokémon?",
+      "Iron Moth — APT or Pokémon?",
+      "Nomadic Octopus — APT or Pokémon?",
+      "Dark Caracal — APT or Pokémon?",
+      "Steelix — APT or Pokémon?",
+      "Sandworm — APT or Pokémon?",
+      "Scattered Spider — APT or Pokémon?",
+      "Eevee — APT or Pokémon?",
+      "Cozy Bear — APT or Pokémon?"
+    ]
+  }
+];
+
+let teamName = '';
+let currentRound = 0;
+let answers = {};
+let locked = {};
+
+function totalQuestions() {
+  return QUIZ.reduce((s, r) => s + r.questions.length, 0);
+}
+function totalLocked() {
+  return Object.keys(locked).length;
+}
+
+function checkName() {
+  const val = document.getElementById('team-name-input').value.trim();
+  document.getElementById('start-btn').disabled = !val;
+}
+
+function startQuiz() {
+  teamName = document.getElementById('team-name-input').value.trim();
+  if (!teamName) return;
+  document.getElementById('header-team-name').textContent = teamName;
+  document.getElementById('sticky-header').style.display = '';
+  currentRound = 0;
+  renderRound();
+  showScreen('screen-round');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const total = totalQuestions();
+  const done = totalLocked();
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('header-progress').style.width = pct + '%';
+  document.getElementById('header-progress-label').textContent = done + ' / ' + total;
+}
+
+function renderRound() {
+  const r = QUIZ[currentRound];
+  document.getElementById('round-badge').textContent = 'Round ' + (currentRound + 1) + ' of ' + QUIZ.length;
+  document.getElementById('round-name').textContent = r.name;
+
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+
+  if (r.note) {
+    const note = document.createElement('div');
+    note.style.cssText = 'margin:10px 1.25rem 4px;font-size:13px;color:var(--text-muted);font-style:italic;';
+    note.textContent = r.note;
+    container.appendChild(note);
+  }
+
+  r.questions.forEach((q, qi) => {
+    const key = currentRound + '-' + qi;
+    const isLocked = !!locked[key];
+    const val = answers[key] || '';
+
+    const card = document.createElement('div');
+    card.className = 'question-card' + (isLocked ? ' locked-card' : '');
+    card.id = 'qcard-' + key;
+
+    card.innerHTML = `
+      <div class="q-top">
+        <div class="q-num">Q${qi + 1}</div>
+        <div class="q-text">${q}</div>
+      </div>
+      <div class="q-bottom">
+        <input
+          class="answer-input"
+          id="ans-${key}"
+          value="${val.replace(/"/g, '&quot;')}"
+          placeholder="Your answer…"
+          ${isLocked ? 'disabled' : ''}
+          oninput="saveAnswer('${key}', this.value)"
+          onkeydown="if(event.key==='Enter')lockAnswer('${key}')"
+        />
+        ${isLocked
+          ? `<div class="locked-tag">Locked in</div>`
+          : `<button class="lock-btn" onclick="lockAnswer('${key}')">Lock in answer ✓</button>`
+        }
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Nav buttons
+  document.getElementById('prev-btn').style.display = currentRound === 0 ? 'none' : '';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = currentRound === QUIZ.length - 1 ? 'Finish quiz →' : 'Next round →';
+
+  updateProgress();
+}
+
+function saveAnswer(key, val) {
+  answers[key] = val;
+}
+
+function lockAnswer(key) {
+  const inp = document.getElementById('ans-' + key);
+  const val = inp ? inp.value.trim() : '';
+  if (!val) { if (inp) inp.focus(); return; }
+  answers[key] = val;
+  locked[key] = true;
+  const card = document.getElementById('qcard-' + key);
+  if (card) {
+    card.classList.add('locked-card');
+    card.querySelector('.q-bottom').innerHTML = `
+      <input class="answer-input" value="${val.replace(/"/g, '&quot;')}" disabled />
+      <div class="locked-tag">Locked in</div>
+    `;
+  }
+  updateProgress();
+}
+
+function nextRound() {
+  if (currentRound < QUIZ.length - 1) {
+    currentRound++;
+    renderRound();
+    showScreen('screen-round');
+  } else {
+    showReview();
+  }
+}
+
+function prevRound() {
+  if (currentRound > 0) {
+    currentRound--;
+    renderRound();
+    showScreen('screen-round');
+  }
+}
+
+function showReview() {
+  document.getElementById('review-team-label').textContent = teamName + "'s Answers";
+  const content = document.getElementById('review-content');
+  content.innerHTML = QUIZ.map((r, ri) => {
+    const rows = r.questions.map((q, qi) => {
+      const key = ri + '-' + qi;
+      const ans = answers[key] || '';
+      const short = q.length > 55 ? q.slice(0, 52) + '…' : q;
+      return `<div class="review-row">
+        <span class="review-q">Q${qi+1}: ${short}</span>
+        <span class="review-a${!ans ? ' empty' : ''}">${ans || '—'}</span>
+      </div>`;
+    }).join('');
+    return `<div class="review-round">
+      <div class="review-round-title">${r.name}</div>
+      <div class="card" style="padding:0.25rem 1rem;">${rows}</div>
+    </div>`;
+  }).join('');
+  showScreen('screen-review');
+  document.getElementById('sticky-header').style.display = 'none';
+}
+</script>
+</body>
+</html>
