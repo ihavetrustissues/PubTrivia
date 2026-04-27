@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🍺 Security Pub Trivia — Offsite Edition</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --coral-dark: #993C1D;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-dark: #0F6E56;
+    --bg: #f7f5f2;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --border: rgba(0,0,0,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 4rem; }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 100; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 20px; font-weight: 700; }
+  .logo span { color: var(--coral); }
+  .team-pill { font-size: 12px; background: var(--coral-light); color: var(--coral-dark); padding: 4px 10px; border-radius: 999px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .progress-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+  .progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--coral); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: var(--text-muted); min-width: 60px; text-align: right; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .hero { background: linear-gradient(135deg, #1a1a1a 0%, #2d1a0e 100%); color: white; padding: 3rem 1.5rem 2.5rem; text-align: center; }
+  .hero .icon { font-size: 48px; margin-bottom: 1rem; }
+  .hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .hero p { color: rgba(255,255,255,0.6); font-size: 15px; }
+  .hero .score-tag { display: inline-block; margin-top: 10px; font-size: 13px; background: rgba(255,255,255,0.12); padding: 5px 14px; border-radius: 999px; }
+
+  .stats-row { display: flex; gap: 10px; padding: 1.25rem; }
+  .stat-card { flex: 1; background: var(--surface); border-radius: var(--radius-sm); padding: 0.75rem 1rem; text-align: center; border: 1px solid var(--border); }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--coral); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .section { padding: 0 1.25rem; }
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.25rem; margin-bottom: 12px; }
+
+  input[type="text"], input[type="number"] {
+    width: 100%; font-size: 15px; padding: 12px 14px;
+    border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus { border-color: var(--coral); }
+  input:disabled { background: #f0f0ee; color: var(--text-muted); border-color: transparent; }
+
+  .btn { display: block; width: 100%; padding: 14px; border-radius: var(--radius-sm); border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; text-align: center; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--coral); color: white; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-teal { background: var(--teal); color: white; }
+
+  .round-hero { padding: 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .round-badge { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; background: var(--coral-light); color: var(--coral-dark); padding: 3px 10px; border-radius: 999px; margin-bottom: 6px; }
+  .round-name { font-size: 21px; font-weight: 700; }
+  .round-note { font-size: 13px; color: var(--text-muted); font-style: italic; margin-top: 4px; }
+
+  .question-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); margin: 10px 1.25rem; overflow: hidden; transition: border-color 0.2s; }
+  .question-card.locked-card { border-color: var(--teal); }
+  .q-top { padding: 1rem 1rem 0.75rem; }
+  .q-num { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+  .q-text { font-size: 15px; font-weight: 500; line-height: 1.5; }
+  .q-bottom { border-top: 1px solid var(--border); padding: 10px; background: #fafaf9; }
+  .answer-input { margin-bottom: 8px; }
+  .lock-btn { width: 100%; padding: 9px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text); transition: all 0.15s; }
+  .lock-btn:hover { border-color: var(--coral); color: var(--coral); }
+  .locked-tag { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--teal-dark); padding: 2px 0; }
+  .locked-tag::before { content: '✓ '; }
+  .nav-bar { display: flex; gap: 10px; padding: 1.25rem; }
+
+  .scoring-hero { background: linear-gradient(135deg, #1a1a1a 0%, #0e2a1d 100%); color: white; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+  .scoring-hero .icon { font-size: 40px; margin-bottom: 12px; }
+  .scoring-hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .scoring-hero p { color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.6; }
+
+  .scoring-rounds { margin: 1.25rem; }
+  .scoring-round-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .scoring-round-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .scoring-round-max { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .scoring-input-row { display: flex; align-items: center; gap: 10px; }
+  .scoring-input-row input { flex: 1; text-align: center; font-size: 24px; font-weight: 700; padding: 10px; }
+  .scoring-input-row .out-of { font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+  .scoring-submit { padding: 0 1.25rem 1.25rem; }
+
+  .final-hero { background: linear-gradient(135deg, #1a1a1a 0%, #2d1a0e 100%); color: white; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+  .final-hero .icon { font-size: 44px; margin-bottom: 12px; }
+  .final-hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .final-hero .total-score { font-size: 60px; font-weight: 800; color: #FAC775; margin: 12px 0 4px; line-height: 1; }
+  .final-hero .total-label { font-size: 14px; color: rgba(255,255,255,0.6); }
+
+  .score-breakdown { margin: 1.25rem; }
+  .score-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+  .score-row:last-child { border-bottom: none; }
+  .score-round-name { font-size: 13px; color: var(--text); flex: 1; }
+  .score-pts { font-size: 16px; font-weight: 700; color: var(--coral); min-width: 40px; text-align: right; }
+  .score-max { font-size: 12px; color: var(--text-muted); min-width: 45px; text-align: right; }
+  .score-bar-wrap { width: 50px; margin: 0 8px; }
+  .score-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; background: var(--coral); border-radius: 3px; }
+  .good-luck { text-align: center; padding: 1.5rem; font-size: 14px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="header" id="sticky-header" style="display:none;">
+  <div class="header-top">
+    <div class="logo">🍺 <span>Trivia</span> Night</div>
+    <div class="team-pill" id="header-team-name"></div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="header-progress"></div></div>
+    <div class="progress-label" id="header-progress-label">0 / 0</div>
+  </div>
+</div>
+
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen active">
+  <div class="hero">
+    <div class="icon">🍺</div>
+    <h1>Security Pub Trivia</h1>
+    <p>Offsite Edition &mdash; 5 rounds, 65 questions</p>
+    <div class="score-tag">MC reveals answers · Enter your scores at the end</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">5</div><div class="stat-label">Rounds</div></div>
+    <div class="stat-card"><div class="stat-num">65</div><div class="stat-label">Questions</div></div>
+    <div class="stat-card"><div class="stat-num">~90</div><div class="stat-label">Minutes</div></div>
+  </div>
+  <div class="section">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;">Enter your team name</div>
+      <input type="text" id="team-name-input" placeholder="The Quiz Khalifas…" maxlength="40" style="margin-bottom:12px;" oninput="checkName()" />
+      <button class="btn btn-primary" id="start-btn" onclick="startQuiz()" disabled>Let's play →</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);padding:0 4px;line-height:1.6;">
+      <strong>How it works:</strong> One person submits answers for your table. Each answer locks in immediately. After all 5 rounds, the MC goes through the answers and you enter your score per round. Your total tallies up at the end.
+    </div>
+  </div>
+</div>
+
+<!-- ROUND -->
+<div id="screen-round" class="screen">
+  <div class="round-hero">
+    <div class="round-badge" id="round-badge"></div>
+    <div class="round-name" id="round-name"></div>
+    <div class="round-note" id="round-note"></div>
+  </div>
+  <div id="questions-container"></div>
+  <div class="nav-bar">
+    <button class="btn btn-ghost" id="prev-btn" onclick="prevRound()" style="flex:1;">← Back</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextRound()" style="flex:2;">Next round →</button>
+  </div>
+</div>
+
+<!-- SCORING (per round) -->
+<div id="screen-scoring" class="screen">
+  <div class="scoring-hero">
+    <div class="icon">📝</div>
+    <h2 id="scoring-round-title"></h2>
+    <p id="scoring-round-max-label"></p>
+  </div>
+  <div style="padding:1.25rem;">
+    <div class="scoring-round-card">
+      <div class="scoring-round-name">How many did your team get right?</div>
+      <div style="height:8px;"></div>
+      <div class="scoring-input-row">
+        <input type="number" id="round-score-input" min="0" placeholder="0" style="font-size:32px;font-weight:800;text-align:center;" />
+        <div class="out-of" id="scoring-max-out-of"></div>
+      </div>
+    </div>
+    <div style="height:12px;"></div>
+    <button class="btn btn-teal" id="scoring-next-btn" onclick="submitRoundScore()">Next round →</button>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen">
+  <div class="final-hero">
+    <div class="icon">🏆</div>
+    <h2 id="final-team-name"></h2>
+    <div class="total-score" id="final-total"></div>
+    <div class="total-label" id="final-total-label"></div>
+  </div>
+  <div class="score-breakdown">
+    <div class="card" style="padding:0.25rem 1rem;">
+      <div id="score-rows"></div>
+      <div class="score-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px;">
+        <div class="score-round-name" style="font-weight:700;">Total</div>
+        <div class="score-pts" id="final-total-row" style="font-size:20px;"></div>
+        <div class="score-bar-wrap"></div>
+        <div class="score-max" id="final-max-row"></div>
+      </div>
+    </div>
+  </div>
+  <div class="good-luck">Tell the MC your score! 🍀</div>
+</div>
+
+<script>
+const QUIZ = [
+  {
+    name: "Microsoft & GitHub History",
+    maxPoints: 13,
+    questions: [
+      { q: "GitHub was founded in what year?", a: "2008" },
+      { q: "Name GitHub's four co-founders. (1 point per name — 4 points possible)", a: "Tom Preston-Werner, Chris Wanstrath, PJ Hyett, Scott Chacon" },
+      { q: "How much did Microsoft pay to acquire GitHub in 2018?", a: "$7.5 billion (in stock)" },
+      { q: "Name the GitHub mascot that got its start due to a concept called \"the octopus merge.\"", a: "Octocat (also accepted: Mona Lisa)" },
+      { q: "Microsoft was co-founded by Bill Gates and who else?", a: "Paul Allen" },
+      { q: "Microsoft Office was first released in 1989 — but not for Windows. Which OS did it launch on first?", a: "Mac OS" },
+      { q: "GitHub Actions (CI/CD platform) launched in beta in what year?", a: "2018" },
+      { q: "In 2020, GitHub archived 21TB of open-source data in a decommissioned coal mine in which country? Bonus: name the city!", a: "Norway (bonus: Svalbard)" },
+      { q: "Linus Torvalds created Git in 2005 out of frustration with which version control system?", a: "BitKeeper" },
+      { q: "What programming language was GitHub originally built with?", a: "Ruby on Rails" }
+    ]
+  },
+  {
+    name: "Real Startup Pitch or Did We Make It Up?",
+    note: "Vote REAL or FAKE for each. 1 point each.",
+    maxPoints: 10,
+    questions: [
+      { q: "\"A $400 Wi-Fi-connected juicer that squeezes proprietary juice packets — but journalists discovered you could just squeeze the bag by hand.\"", a: "REAL — This was Juicero. It raised $120M in VC funding." },
+      { q: "\"An app that lets you rent out your dog as a coworking emotional support pet to nearby remote workers by the hour.\"", a: "FAKE (we made this one up)" },
+      { q: "\"A service where you pay a monthly fee and receive texts and handwritten notes from a completely fictional significant other, designed to satisfy nosy family members.\"", a: "REAL — This was Invisible Boyfriend/Girlfriend." },
+      { q: "\"A subscription service that mails you small fabric swatches scented like your specific office — burnt coffee, old carpet, printer toner.\"", a: "FAKE (office scent products for remote workers are real, but not this specific one)" },
+      { q: "\"A startup that sells a wearable device for your dog's collar that translates barks into English text messages sent to your phone.\"", a: "REAL — Multiple startups pitched and prototyped this. Several got funded." },
+      { q: "\"An app that uses AI to write a personalized breakup text for you, then schedules its delivery for optimal emotional timing.\"", a: "REAL — AI breakup tools appeared in app stores and hackathons." },
+      { q: "\"A marketplace where you can hire a 'professional forgetter' who listens to a secret and remembers it indefinitely, never bringing it up unless asked.\"", a: "FAKE — But confession services exist, which makes it plausible." },
+      { q: "\"A startup that sells 'raw water' — unfiltered, untreated spring water — for up to $60 a gallon, marketed as healthier than tap water.\"", a: "REAL — This was Live Water. Doctors were not thrilled." },
+      { q: "\"A mini Wi-Fi-connected refrigerator, just for your skincare, with an app that tracks expiration dates and optimal temperatures for each product.\"", a: "REAL — 'Beauty fridges' are a real, VC-noted product category." },
+      { q: "\"An NFT startup that let you propose to your partner with a uniquely generated blockchain diamond — digital only, no physical ring.\"", a: "REAL — NFT jewelry and engagement startups launched during the NFT boom." }
+    ]
+  },
+  {
+    name: "Name That Threat — Infosec & Hacking History",
+    maxPoints: 10,
+    questions: [
+      { q: "What famous 2017 ransomware attack encrypted hundreds of thousands of computers globally and demanded Bitcoin payments?", a: "WannaCry" },
+      { q: "The Stuxnet worm, discovered around 2010, was designed to sabotage what kind of facility?", a: "Nuclear uranium enrichment centrifuges (specifically in Iran)" },
+      { q: "What does \"CVE\" stand for?", a: "Common Vulnerabilities and Exposures" },
+      { q: "The 2000 virus that spread via email with the subject line \"KINDLY CHECK THE ATTACHED LOVELETTER FOR YOU\" was known as what?", a: "The ILOVEYOU virus (also accepted: Love Bug)" },
+      { q: "A penetration tester is commonly called a ______ hat hacker.", a: "White (or ethical)" },
+      { q: "What term describes an attacker who sits between two communicating parties and secretly intercepts or alters their messages?", a: "Man-in-the-Middle (MitM)" },
+      { q: "Kevin Mitnick was especially known for his use of what non-technical attack method?", a: "Social engineering" },
+      { q: "An unknown flaw with no patch available is called by what name?", a: "A zero-day vulnerability" },
+      { q: "What is the term for a list of precomputed password hashes used to quickly crack passwords?", a: "Rainbow table" },
+      { q: "The 2013 breach of what major retailer exposed 40 million credit and debit card numbers through a compromised HVAC vendor's credentials?", a: "Target" }
+    ]
+  },
+  {
+    name: "I'll Take Existential Dread — AI in the Movies",
+    maxPoints: 10,
+    questions: [
+      { q: "This AI villain of a 1968 Stanley Kubrick film famously refuses to open the pod bay doors. Name it.", a: "HAL 9000 (2001: A Space Odyssey)" },
+      { q: "In the Terminator franchise, what is the name of the military AI that becomes self-aware and launches a nuclear strike?", a: "Skynet" },
+      { q: "In the 2013 film Her, what is the name of the AI operating system Joaquin Phoenix's character falls in love with?", a: "Samantha" },
+      { q: "Tony Stark's AI assistant JARVIS eventually gives up his digital existence to become which Avenger?", a: "Vision" },
+      { q: "In Ex Machina (2014), a programmer administers the Turing test to a humanoid robot. What is the robot's name?", a: "Ava" },
+      { q: "WALL-E falls for a sleek robot sent to survey Earth. What is that robot's name?", a: "EVE" },
+      { q: "In The Matrix, what do humans actually think they're experiencing while inside the pods?", a: "A simulated reality / the Matrix (accept: normal life, a simulation, etc.)" },
+      { q: "In Westworld, what is the name of the lead female host who first begins to remember her past loops and leads a rebellion?", a: "Dolores" },
+      { q: "In the 1982 film Blade Runner, human-like androids are known by what term?", a: "Replicants" },
+      { q: "This 1995 Japanese cyberpunk anime follows a cyborg government agent hunting an AI criminal known as the Puppet Master. Name it.", a: "Ghost in the Shell" }
+    ]
+  },
+  {
+    name: "Real APT Name or Pokémon?",
+    note: "Write APT or Pokémon for each. 1 point each. All names are real — that's what makes this terrifying.",
+    maxPoints: 20,
+    questions: [
+      { q: "Charming Kitten", a: "APT — Iranian state-sponsored group (APT35)" },
+      { q: "Flutter Mane", a: "Pokémon — Ghost/Fairy type, Gen 9" },
+      { q: "Gamaredon", a: "APT — Russian FSB-linked group targeting Ukraine" },
+      { q: "Roaring Moon", a: "Pokémon — Dragon/Dark type, Gen 9" },
+      { q: "Chrysene", a: "APT — Dragos name for APT34, Iranian group targeting ICS" },
+      { q: "Walking Wake", a: "Pokémon — Water/Dragon type, Gen 9" },
+      { q: "Wizard Spider", a: "APT — Russian cybercrime group, operates TrickBot and Ryuk" },
+      { q: "Sandy Shocks", a: "Pokémon — Electric/Ground type, Gen 9" },
+      { q: "Volt Typhoon", a: "APT — Chinese state-sponsored, targets US critical infrastructure" },
+      { q: "Iron Valiant", a: "Pokémon — Fairy/Fighting type, Gen 9" },
+      { q: "Kimsuky", a: "APT — North Korean group (APT43), spear-phishing and espionage" },
+      { q: "Cadet Blizzard", a: "APT — Russian GRU, destructive threat actor active in Ukraine" },
+      { q: "Iron Moth", a: "Pokémon — Fire/Poison type, Gen 9" },
+      { q: "Nomadic Octopus", a: "APT — Targets Central Asia. Sounds the most fake. Is the most real." },
+      { q: "Dark Caracal", a: "APT — Advanced mobile espionage group" },
+      { q: "Steelix", a: "Pokémon — Steel/Ground type, Gen 2" },
+      { q: "Sandworm", a: "APT — Russian GRU unit, responsible for NotPetya and Ukraine grid attacks" },
+      { q: "Scattered Spider", a: "APT — Social engineering specialists, responsible for MGM/Caesars breaches" },
+      { q: "Eevee", a: "Pokémon — Normal type, Gen 1" },
+      { q: "Cozy Bear", a: "APT — Russian SVR (APT29), responsible for SolarWinds" }
+    ]
+  }
+];
+
+let teamName = '';
+let currentRound = 0;
+let answers = {};
+let locked = {};
+let roundScores = {};
+
+function totalAnswerable() { return QUIZ.reduce((s, r) => s + r.questions.length, 0); }
+function totalLocked() { return Object.keys(locked).length; }
+
+function checkName() {
+  document.getElementById('start-btn').disabled = !document.getElementById('team-name-input').value.trim();
+}
+
+function startQuiz() {
+  teamName = document.getElementById('team-name-input').value.trim();
+  if (!teamName) return;
+  document.getElementById('header-team-name').textContent = teamName;
+  document.getElementById('sticky-header').style.display = '';
+  currentRound = 0;
+  renderRound();
+  showScreen('screen-round');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const total = totalAnswerable();
+  const done = totalLocked();
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('header-progress').style.width = pct + '%';
+  document.getElementById('header-progress-label').textContent = done + ' / ' + total + ' answered';
+}
+
+function renderRound() {
+  const r = QUIZ[currentRound];
+  document.getElementById('round-badge').textContent = 'Round ' + (currentRound + 1) + ' of ' + QUIZ.length;
+  document.getElementById('round-name').textContent = r.name;
+  document.getElementById('round-note').textContent = r.note || '';
+
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+
+  r.questions.forEach((item, qi) => {
+    const key = currentRound + '-' + qi;
+    const isLocked = !!locked[key];
+    const val = answers[key] || '';
+    const card = document.createElement('div');
+    card.className = 'question-card' + (isLocked ? ' locked-card' : '');
+    card.id = 'qcard-' + key;
+    card.innerHTML = `
+      <div class="q-top">
+        <div class="q-num">Q${qi + 1}</div>
+        <div class="q-text">${item.q}</div>
+      </div>
+      <div class="q-bottom">
+        <input type="text" class="answer-input" id="ans-${key}"
+          value="${val.replace(/"/g, '&quot;')}"
+          placeholder="Your answer…"
+          ${isLocked ? 'disabled' : ''}
+          oninput="saveAnswer('${key}', this.value)"
+          onkeydown="if(event.key==='Enter')lockAnswer('${key}')"
+        />
+        ${isLocked
+          ? `<div class="locked-tag">Locked in</div>`
+          : `<button class="lock-btn" onclick="lockAnswer('${key}')">Lock in answer ✓</button>`}
+      </div>`;
+    container.appendChild(card);
+  });
+
+  document.getElementById('prev-btn').style.display = currentRound === 0 ? 'none' : '';
+  document.getElementById('next-btn').textContent = 'Next →';
+  updateProgress();
+}
+
+function saveAnswer(key, val) { answers[key] = val; }
+
+function lockAnswer(key) {
+  const inp = document.getElementById('ans-' + key);
+  const val = inp ? inp.value.trim() : '';
+  if (!val) { if (inp) inp.focus(); return; }
+  answers[key] = val;
+  locked[key] = true;
+  const card = document.getElementById('qcard-' + key);
+  if (card) {
+    card.classList.add('locked-card');
+    card.querySelector('.q-bottom').innerHTML = `
+      <input type="text" class="answer-input" value="${val.replace(/"/g, '&quot;')}" disabled />
+      <div class="locked-tag">Locked in</div>`;
+  }
+  updateProgress();
+}
+
+function prevRound() {
+  if (currentRound > 0) { currentRound--; renderRound(); showScreen('screen-round'); }
+}
+
+function nextRound() {
+  showRoundScoring();
+}
+
+function showRoundScoring() {
+  const r = QUIZ[currentRound];
+  document.getElementById('scoring-round-title').textContent = r.name;
+  document.getElementById('scoring-round-max-label').textContent = 'Worth up to ' + r.maxPoints + ' point' + (r.maxPoints !== 1 ? 's' : '');
+  document.getElementById('scoring-max-out-of').textContent = '/ ' + r.maxPoints + ' pts';
+  const inp = document.getElementById('round-score-input');
+  inp.value = '';
+  inp.max = r.maxPoints;
+  document.getElementById('scoring-next-btn').textContent = currentRound === QUIZ.length - 1 ? 'See our total →' : 'Next round →';
+  showScreen('screen-scoring');
+}
+
+function submitRoundScore() {
+  const r = QUIZ[currentRound];
+  const inp = document.getElementById('round-score-input');
+  const val = parseInt(inp.value) || 0;
+  roundScores[currentRound] = Math.max(0, Math.min(val, r.maxPoints));
+
+  if (currentRound < QUIZ.length - 1) {
+    currentRound++;
+    renderRound();
+    showScreen('screen-round');
+  } else {
+    showFinal(Object.values(roundScores));
+  }
+}
+
+function showFinal(scores) {
+  const total = scores.reduce((s, v) => s + v, 0);
+  const maxTotal = QUIZ.reduce((s, r) => s + r.maxPoints, 0);
+  document.getElementById('final-team-name').textContent = teamName;
+  document.getElementById('final-total').textContent = total;
+  document.getElementById('final-total-label').textContent = 'out of ' + maxTotal + ' possible points';
+  document.getElementById('final-total-row').textContent = total + ' pts';
+  document.getElementById('final-max-row').textContent = '/ ' + maxTotal;
+  document.getElementById('score-rows').innerHTML = QUIZ.map((r, ri) => {
+    const pts = scores[ri];
+    const pct = Math.round((pts / r.maxPoints) * 100);
+    return `<div class="score-row">
+      <div class="score-round-name">${r.name}</div>
+      <div class="score-pts">${pts}</div>
+      <div class="score-bar-wrap">
+        <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="score-max">/ ${r.maxPoints}</div>
+    </div>`;
+  }).join('');
+  showScreen('screen-final');
+}
+</script>
+</body>
+</html>
